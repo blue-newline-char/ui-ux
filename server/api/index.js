@@ -9,31 +9,35 @@ const {Client} = require('pg');
  */
 function getDocIds(query, rankingURL, callback) {
   let parsedData;
-  http.get(rankingURL + query, (resp) => {
-    const status = resp.statusCode;
+  try {
+    http.get(rankingURL + query, (resp) => {
+      const status = resp.statusCode;
 
-    if (status != 200) {
-      const error = new Error('Request to ranking was unsuccessful\n');
-      console.error(error.message);
-      resp.resume();
-      return callback( {docs: []} );
-    }
-
-    let rawData = '';
-    resp.on('data', (chunk) => {
-      rawData += chunk;
-    });
-    resp.on('end', () => {
-      try {
-        parsedData = JSON.parse(rawData);
-
-        return callback( parsedData );
-      } catch (e) {
-        console.error(e.message);
+      if (status != 200) {
+        const error = new Error('Request to ranking was unsuccessful\n');
+        console.error(error.message);
+        resp.resume();
         return callback( {docs: []} );
       }
+
+      let rawData = '';
+      resp.on('data', (chunk) => {
+        rawData += chunk;
+      });
+      resp.on('end', () => {
+        try {
+          parsedData = JSON.parse(rawData);
+
+          return callback( parsedData );
+        } catch (e) {
+          console.error(e.message);
+          return callback( {docs: []} );
+        }
+      });
     });
-  });
+  } catch (e) {
+    callback({docs: []} );
+  }
 }
 
 /** Gets an array of pages JSONs from indexing
@@ -52,12 +56,12 @@ function getPages(docIds, indexingURL, callback) {
   });
 
   const results = [];
-  const text = 'SELECT title, url FROM documents WHERE id=';
+  let text = 'SELECT title, url, description, paragraphs ';
+  text += 'FROM documents WHERE id=';
   client.connect((error) =>{
     if (error) {
       console.error(error.message);
-    } else {
-      // console.log('connected');
+      callback(results);
     }
   });
 
@@ -81,6 +85,7 @@ function getPages(docIds, indexingURL, callback) {
           }
         } else {
           expectedLen--;
+
           if (actualLen == expectedLen) {
             client.end();
             callback(results);

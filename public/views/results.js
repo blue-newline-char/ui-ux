@@ -18,8 +18,9 @@ Http.onreadystatechange = () => {
     for (let i = 0; i < pages.length; i++) {
       $('#list').append('<li id="list-el' +
         i + '"><h2>' + pages[i].title +
-        '</h2><h4>' + pages[i].url +
-        '</h4><p>...Text Snippets...</p></li>');
+        '</h2><h4><a href=' + pages[i].url +
+        '/>'+ pages[i].url +
+        '</h4><p>' + pages[i].snippet + '</p></li>');
     }
   }
 };
@@ -27,3 +28,34 @@ Http.onreadystatechange = () => {
 $('document').ready(function() {
   $('#searchbar').val(getQuery());
 });
+
+
+/** Append keypress event to the input box */
+$('document').ready(function() {
+  const input = document.getElementById('searchbar');
+  input.addEventListener('keyup', function(event) {
+    // Cancel the default action, if needed
+    event.preventDefault();
+    // If "Enter" key is pressed
+    if (event.keyCode === 13) {
+      document.getElementById('go-button').click();
+    }
+  });
+});
+
+/** Validate the search query and pass the query to the result page */
+function startSearch() {
+  const search = document.getElementById('searchbar');
+  const query = search.value;
+  console.log(query);
+  if (query.length==0) {
+    console.log('Empty query');
+  } else {
+    console.log('Query: '+query);
+    const url = '/results.html?query='+query;
+    window.location = url;
+  }
+}
+
+
+/* exported startSearch */
